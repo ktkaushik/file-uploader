@@ -14,7 +14,7 @@ module.exports = {
     },
 
     constants: {
-        'apiKeyHeader': 'x-api-key'
+        uploadsDirectoryName: 'files-uploaded'
     },
 
     app: {

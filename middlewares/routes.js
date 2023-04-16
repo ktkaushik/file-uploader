@@ -1,6 +1,6 @@
 
 module.exports = function (app) {
-    const index = require('../routes/index_controller')
+    const uploads = require('../routes/uploads_controller')
 
-    app.use('/', index)
+    app.use('/', uploads)
 }
