@@ -54,55 +54,27 @@ router.post('/upload', upload.array('files'), (req, res) => {
 
     const fileStreams = req.files.map((file) => {
         const timestamp = Date.now();
-        console.log(file)
         const readFilePath = path.join(uploadDir, file.filename)
-        console.log('readFilePath')
-        console.log(readFilePath)
         const readStream = fs.createReadStream(readFilePath)
         const filePath = path.join(uploadDir, file.originalname);
         const writeStream = fs.createWriteStream(filePath, 'utf8');
         readStream.pipe(writeStream)
         uploadedFiles.push(file.originalname);
-        // return writeStream;
+
+        writeStream.on('error', (error) => {
+            console.error('Error while uploading file')
+            writeStream.end()
+            throw error
+        })
 
         writeStream.on('finish', () => {
             console.log('done writing..........')
-            console.log('done writing..........')
-            console.log('done writing..........')
-            console.log('done writing..........')
             writeStream.end()
-            // fs.unlinkSync(path.join('uploads', writeStream.path));
             fs.unlinkSync(readFilePath);
         })
     });
 
     return res.json({done: true})
-
-    // let finishedStreams = 0;
-
-    // req.on('data', (chunk) => {
-    //     console.log('in data ------------------------------')
-    //     fileStreams.forEach((writeStream) => {
-    //         writeStream.write(chunk);
-    //     });
-    // });
-
-    // req.on('end', () => {
-    //     fileStreams.forEach((writeStream) => {
-    //         writeStream.end();
-    //     });
-    //     console.log(`%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%`)
-    //     res.send('Files uploaded successfully');
-    //     console.log(`%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%`)
-    // });
-
-    // req.on('aborted', () => {
-    //     fileStreams.forEach((writeStream) => {
-    //         writeStream.end();
-    //         fs.unlinkSync(path.join('uploads', writeStream.path));
-    //     });
-    //     res.status(500).send('File upload aborted');
-    // });
 });
 
 module.exports = router;
