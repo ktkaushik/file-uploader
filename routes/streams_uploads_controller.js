@@ -1,8 +1,10 @@
-const express = require('express');
-const router  = express.Router();
-const multer  = require('multer');
-const fs      = require('fs');
-const path    = require('path');
+const express = require('express')
+const router  = express.Router()
+const multer  = require('multer')
+const fs      = require('fs')
+const path    = require('path')
+const config  = require('../config')()
+const Limiter = require('../lib/limiter')
 
 router.get('/', (req, res, next) => {
     res.format({
@@ -24,7 +26,7 @@ const storage = multer.diskStorage({
         console.log(`the IP address is ${req.ip}`)
         // const ip = req.ip
         const ip = '10.10.10.10'
-        const uploadDir = path.join(__dirname, '..', 'uploads', ip);
+        const uploadDir = path.join(__dirname, '..', config.constants.uploadsDirectoryName, ip);
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
         }
@@ -36,6 +38,7 @@ const storage = multer.diskStorage({
     }
 });
 
+// Configure multer to upload
 const upload = multer({
     storage: storage,
     limits: {
@@ -43,36 +46,62 @@ const upload = multer({
     }
 });
 
-router.post('/upload', upload.array('files'), (req, res) => {
+/**
+ * 1. Get IP of the user
+ * 2. check if folder exists
+ * 3. check how many files are uploaded by the user
+ * 4. if number of files is more than cnofigured amount then throw error
+ * 5. if number of files are not more than configured amount then upload the file
+ * 6. check when was the first file uploaded
+ * 7. 
+ */
+router.post('/upload', upload.array('files'), async (req, res, next) => {
     const uploadedFiles = [];
     // const ip = req.ip;
     const ip = '10.10.10.10';
-    const uploadDir = path.join(__dirname, '..', 'uploads', ip);
-    if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-    }
+    const files = req.files
 
-    const fileStreams = req.files.map((file) => {
-        const timestamp = Date.now();
-        const readFilePath = path.join(uploadDir, file.filename)
-        const readStream = fs.createReadStream(readFilePath)
-        const filePath = path.join(uploadDir, file.originalname);
-        const writeStream = fs.createWriteStream(filePath, 'utf8');
-        readStream.pipe(writeStream)
-        uploadedFiles.push(file.originalname);
+    const {allow, message} = await new Limiter(ip, files).allowUploadsForThisIP()
+    console.log(`Allowed? ${allow}`)
+    console.log(`Message? ${message}`)
+    if (allow) {
 
-        writeStream.on('error', (error) => {
-            console.error('Error while uploading file')
-            writeStream.end()
-            throw error
-        })
+        const uploadDir = path.join(__dirname, '..', config.constants.uploadsDirectoryName, ip);
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
 
-        writeStream.on('finish', () => {
-            console.log('done writing..........')
-            writeStream.end()
+        const fileStreams = req.files.map((file) => {
+            const timestamp    = Date.now();
+            const readFilePath = path.join(uploadDir, file.filename)
+            const readStream   = fs.createReadStream(readFilePath)
+            const filePath     = path.join(uploadDir, file.originalname);
+            const writeStream  = fs.createWriteStream(filePath, 'utf8');
+            // init read stream so we can write a new file
+            readStream.pipe(writeStream)
+            uploadedFiles.push(file.originalname);
+
+            // error handling
+            writeStream.on('error', (error) => {
+                console.error('Error while uploading file')
+                writeStream.end()
+                throw error
+            })
+    
+            writeStream.on('finish', () => {
+                console.log('done writing..........')
+                writeStream.end()
+                fs.unlinkSync(readFilePath);
+            })
+        });
+    } else {
+        files.forEach((file) => {
+            const uploadDir = path.join(__dirname, '..', config.constants.uploadsDirectoryName, ip);
+            const readFilePath = path.join(uploadDir, file.filename)
             fs.unlinkSync(readFilePath);
         })
-    });
+        return next(new Error(message))
+    }
 
     return res.json({done: true})
 });

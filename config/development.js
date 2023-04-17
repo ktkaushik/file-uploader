@@ -15,7 +15,12 @@ module.exports = {
 
     constants: {
         uploadsDirectoryName: 'files-uploaded',
-        sizeLimits: 1024 * 1024 * 1024 // 1 GB
+        dailyTotalUploadLimit: 5,
+        sizeLimits: 1024 * 1024 * 1024, // 1 GB,
+        messages: {
+            dailySizeLimitsReached: 'Sorry, daily limit reached in terms of size. Try again tomorrow.',
+            dailyTotalLimitReached: 'Sorry, daily limit reached for total files uploaded. Try again later.',
+        }
     },
 
     app: {

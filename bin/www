@@ -88,8 +88,6 @@ function onListening() {
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
-
-  // const consoleOptions = 'background: transparent';
     console.log(`
     
    '##:::'##::::'###::::'##::::'##::'######::'##::::'##:'####:'##:::'##:
