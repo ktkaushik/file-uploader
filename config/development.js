@@ -19,7 +19,7 @@ module.exports = {
         purgeUploadsTimeUnit   : 'hours',            // accepts milliseconds, seconds, minutes, hours, days, weeks, months, years only
         purgeUploadsTimeMeasure: 4,                  // 4 hours
         totalUploadsLimit      : 5,                  // 5 files allowed every 4 hours
-        sizeLimits             : 1024 * 1024 * 1024, // 1 GB upload limit
+        sizeLimit              : 1024 * 1024 * 1024, // 1 GB upload limit
         messages: {
             dailySizeLimitsReached: 'Sorry, daily limit reached in terms of size. Try again tomorrow.',
             dailyTotalLimitReached: 'Sorry, daily limit reached for total files uploaded. Try again later.',

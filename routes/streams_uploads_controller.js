@@ -73,11 +73,11 @@ router.post('/upload', upload.array('files'), async (req, res, next) => {
         }
 
         const fileStreams = req.files.map((file) => {
-            const timestamp    = Date.now();
             const readFilePath = path.join(tempDir, file.filename)
             const readStream   = fs.createReadStream(readFilePath)
             const filePath     = path.join(uploadDir, file.originalname);
             const writeStream  = fs.createWriteStream(filePath, 'utf8');
+
             // init read stream so we can write a new file
             readStream.pipe(writeStream)
             uploadedFiles.push(file.originalname);
@@ -90,7 +90,6 @@ router.post('/upload', upload.array('files'), async (req, res, next) => {
             })
     
             writeStream.on('finish', () => {
-                console.log('done writing..........')
                 writeStream.end()
                 fs.unlinkSync(readFilePath);
             })
