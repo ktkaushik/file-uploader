@@ -1,4 +1,4 @@
 {
     "verbose": true,
-    "ignore": ["cypress/", "assets/", "public/"]
+    "ignore": ["cypress/", "assets/", "public/", "/uploads"]
   }

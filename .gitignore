@@ -1,6 +1,7 @@
+.DS_Store
 
 files-uploaded/
-
+uploads/
 node_modules/
 
 config/secret.js

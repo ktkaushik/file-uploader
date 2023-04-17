@@ -31,31 +31,44 @@ const storage = multer.diskStorage({
     }
 });
 
-// Initialize multer with storage engine
-const upload = multer({ storage: storage });
+const upload = multer({ 
+    storage: storage,
+    limit: config.constants.sizeLimits // 1 GB
+});
 
-// Route for file upload
-router.post('/upload', upload.single('file'), (req, res) => {
-    const file = req.file;
-    const filePath = path.join(__dirname, '..', `${config.constants.uploadsDirectoryName}`, file.filename);
-
-    // Create a write stream to the file
-    const writeStream = fs.createWriteStream(filePath);
-
-    // Pipe the request stream to the write stream
-    req.pipe(writeStream);
-
-    // Listen for errors
-    writeStream.on('error', (err) => {
+router.post('/upload', (req, res) => {
+    upload(req, res, (err) => {
+        if (err) {
         console.error(err);
-        res.status(500).send('An error occurred while uploading the file');
-    });
+        res.status(500).send('An error occurred while uploading the file(s)');
+        return;
+        }
 
-    // Listen for completion
-    writeStream.on('finish', () => {
-        console.log(`File uploaded to ${filePath}`);
-        res.send('File uploaded successfully');
+        console.log('Files uploaded successfully');
+        res.send('Files uploaded successfully');
     });
 });
+
+router.post('/multi-upload', upload.array('files'), (req, res, next) => {
+    const file = req.files[0]
+    console.log(file)
+    const filePath = path.join(__dirname, '..', `${config.constants.uploadsDirectoryName}`, file.filename)
+    const writeStream = fs.createWriteStream(filePath)
+    // With the open - event, data will start being written
+    // from the request to the stream's destination path
+    writeStream.on('open', () => {
+        console.log('Stream open ...  0.00%');
+        req.pipe(writeStream);
+    });
+
+    // When the stream is finished, print a final message
+    // Also, resolve the location of the file to calling function
+    writeStream.on('close', () => {
+        console.log('Processing  ...  100%');
+        // resolve(filePath);
+    });
+
+    return res.json({done: true})
+})
 
 module.exports = router;

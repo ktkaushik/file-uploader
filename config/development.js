@@ -14,7 +14,8 @@ module.exports = {
     },
 
     constants: {
-        uploadsDirectoryName: 'files-uploaded'
+        uploadsDirectoryName: 'files-uploaded',
+        sizeLimits: 1024 * 1024 * 1024 // 1 GB
     },
 
     app: {

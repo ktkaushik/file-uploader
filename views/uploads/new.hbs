@@ -1,5 +1,6 @@
 <h1>Upload Files</h1>
 <form action="/upload" method="POST" enctype="multipart/form-data">
-    <input type="file" name="file">
+{{!-- <form action="/multi-upload" method="POST" enctype="multipart/form-data"> --}}
+    <input type="file" name="files" aria-multiselectable="true" multiple>
     <button type="submit">Upload</button>
 </form>
