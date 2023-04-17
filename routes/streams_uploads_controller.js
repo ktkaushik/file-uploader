@@ -26,7 +26,7 @@ const storage = multer.diskStorage({
         console.log(`the IP address is ${req.ip}`)
         // const ip = req.ip
         const ip = '10.10.10.10'
-        const uploadDir = path.join(__dirname, '..', config.constants.uploadsDirectoryName, ip);
+        const uploadDir = path.join(__dirname, '..', 'temp');
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
         }
@@ -66,6 +66,7 @@ router.post('/upload', upload.array('files'), async (req, res, next) => {
     console.log(`Message? ${message}`)
     if (allow) {
 
+        const tempDir   = path.join(__dirname, '..', 'temp');
         const uploadDir = path.join(__dirname, '..', config.constants.uploadsDirectoryName, ip);
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
@@ -73,7 +74,7 @@ router.post('/upload', upload.array('files'), async (req, res, next) => {
 
         const fileStreams = req.files.map((file) => {
             const timestamp    = Date.now();
-            const readFilePath = path.join(uploadDir, file.filename)
+            const readFilePath = path.join(tempDir, file.filename)
             const readStream   = fs.createReadStream(readFilePath)
             const filePath     = path.join(uploadDir, file.originalname);
             const writeStream  = fs.createWriteStream(filePath, 'utf8');
@@ -96,8 +97,7 @@ router.post('/upload', upload.array('files'), async (req, res, next) => {
         });
     } else {
         files.forEach((file) => {
-            const uploadDir = path.join(__dirname, '..', config.constants.uploadsDirectoryName, ip);
-            const readFilePath = path.join(uploadDir, file.filename)
+            const readFilePath = path.join(__dirname, '..', 'temp', file.filename)
             fs.unlinkSync(readFilePath);
         })
         return next(new Error(message))

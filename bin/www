@@ -100,11 +100,13 @@ function onListening() {
    ..::::..::..:::::..:::.......::::......:::..:::::..::....::..::::..::
    
                                       
+      Author 👉 Kaushik Thirthappa
       Resume 👉 https://rsm.io/KaushikLovesBuildingThings
       Email  👉 kaushikisopentowork@gmail.com
       Phone  👉 0413962720
       ______________________________________________________
-      This project is a Node.js based assignment for meldCX.
+
+      This is a Node.js assignment made for meldCX
       
       Stack used:
       1. Node.JS v18.16.0 (latest)
