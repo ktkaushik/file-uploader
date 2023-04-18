@@ -44,22 +44,22 @@ app.use(express.json());
 app.use(express.urlencoded({limit: '20mb', extended: true }));
 app.use(cookieParser());
 
-mongoose.connect(config.mongodb.uri, config.mongodb.options);
+// mongoose.connect(config.mongodb.uri, config.mongodb.options);
 
-app.use(session({
-        secret: '1236876781346812736jkodghfjklahsdf',
-        name: 'orangatun-and-a-chimpanzee',
-        maxAge: new Date(Date.now() + (3600000 * 24 * 30 * 12)), // one year
-        proxy: true,
-        resave: true,
-        saveUninitialized: true,
-        store: new MongoStore({
-            mongooseConnection: mongoose.connection
-        }, function(err) {
-            console.log(err || 'connect-mongodb setup ok');
-        })
-    })
-);
+// app.use(session({
+//         secret: '1236876781346812736jkodghfjklahsdf',
+//         name: 'orangatun-and-a-chimpanzee',
+//         maxAge: new Date(Date.now() + (3600000 * 24 * 30 * 12)), // one year
+//         proxy: true,
+//         resave: true,
+//         saveUninitialized: true,
+//         store: new MongoStore({
+//             mongooseConnection: mongoose.connection
+//         }, function(err) {
+//             console.log(err || 'connect-mongodb setup ok');
+//         })
+//     })
+// );
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(flash())
