@@ -1,16 +1,18 @@
-const express = require('express')
-const router  = express.Router()
-const multer  = require('multer')
-const fs      = require('fs')
-const path    = require('path')
-const config  = require('../config')()
-const Limiter = require('../lib/limiter')
+const express   = require('express')
+const router    = express.Router()
+const multer    = require('multer')
+const fs        = require('fs')
+const path      = require('path')
+const config    = require('../config')()
+const zipFolder = require('zip-a-folder')
+const Limiter   = require('../lib/limiter')
 const FilesManager = require('../lib/files_manager')
 const {
     getPrivateKey, 
     base64Encode, 
     getEncodedFolderNameForIP,
-    getFolderNameFromPrivateKey
+    getFolderNameFromPublicKey,
+    base64Decode
 }  = require('../lib/utilities')
 
 // Set up storage configuration for multer
@@ -40,32 +42,25 @@ const upload = multer({
     }
 })
 
-/**
- * 1. Get IP of the user
- * 2. check if folder exists
- * 3. check how many files are uploaded by the user
- * 4. if number of files is more than cnofigured amount then throw error
- * 5. if number of files are not more than configured amount then upload the file
- * 6. check when was the first file uploaded
- * 7. 
- */
+// Upload files route
 router.post('/', upload.array('files'), async (req, res, next) => {
     try {
 
         const files = req.files
-        const uploadedFiles = []
+
         // const ip = req.ip
         const ip = '10.10.10.10'
 
+        // Initialise FilesManager and get folder info for this up
         const filesManager = new FilesManager(ip, files)
         const {uploadDirPath, publicKey, privateKey} = filesManager.getFolderInfo()
 
-        console.log({uploadDirPath, publicKey, privateKey})
         // Call the Limiter module and check if uploads are allowed
         const {allow, errorMessage} = await new Limiter(ip, files, uploadDirPath).allowUploadsForThisIP()
 
         if (allow) {
 
+            // upload files
             await filesManager.upload()
 
             // send response with publicKey and privateKey
@@ -88,78 +83,43 @@ router.post('/', upload.array('files'), async (req, res, next) => {
 
 })
 
+// Download all the files uploaded by zipping it. Most browsers won't support downloading multiple files simultaneously
 router.get('/:publicKey', async (req, res, next) => {
     try {
-        const uploadedFiles = []
-        const files = req.files
-
         // const ip = req.ip
         const ip = '10.10.10.10'
 
-        // get publicKey and privateKey
-        const publicKey  = base64Encode(ip)
-        const privateKey = getPrivateKey(ip)
-
-        // Call the Limiter module and check if uploads are allowed
-        const {allow, errorMessage} = await new Limiter(ip, files, publicKey, privateKey).allowUploadsForThisIP()
-
-        console.log(`Allowed? ${allow}`)
-        console.log(`errorMessage? ${errorMessage}`)
-
-        // get path for temp upload of files
-        const tempDir = path.join(__dirname, '..', 'temp')
+        const publicKey = req.params.publicKey
 
         // get path to upload files for this IP
-        const uploadDir = path.join(__dirname, '..', config.constants.uploadsDirectoryName, getEncodedFolderNameForIP(publicKey, privateKey))
+        const uploadDirPath = path.join(__dirname, '..', config.constants.uploadsDirectoryName, getFolderNameFromPublicKey(publicKey))
 
         // create a folder for this IP if it doesn't exist
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true })
+        if (!fs.existsSync(uploadDirPath)) {
+            return res.status(200).json({
+                files_found: false,
+                message: config.constants.messages.noFilesFound
+            })
         }
 
-        // begin uploading
-        files.forEach((file) => {
+        const zippedFolderPath = path.join(__dirname, '../temp', 'files-archive.zip')
+        await zipFolder.zip(uploadDirPath, zippedFolderPath)
 
-            // read file from temp path
-            const readFilePath = path.join(tempDir, file.filename)
-            const readStream   = fs.createReadStream(readFilePath)
+        // 
+        res.setHeader('Content-Disposition', 'attachment; filename=files-archive.zip');
 
-            // set write file path
-            const writeFilePath = path.join(uploadDir, file.originalname)
-            const writeStream   = fs.createWriteStream(writeFilePath, 'utf8')
+        // Create a read stream from the file
+        const donwloadStream = fs.createReadStream(zippedFolderPath)
 
-            // init read stream so we can write a new file
-            readStream.pipe(writeStream)
-
-            // send response of each file uploaded. TBD
-            uploadedFiles.push(file.originalname)
-
-            // error handling
-            writeStream.on('error', (error) => {
-                console.error('Error while uploading file')
-                writeStream.end()
-                throw error
-            })
-
-            // Uploads finish
-            writeStream.on('finish', () => {
-                console.log(`File uploaded ${file.originalname}`)
-                writeStream.end()
-                fs.unlinkSync(readFilePath)
-            })
-        })
-
-        // send response with publicKey and privateKey
-        return res.json({uploads: true, publicKey, privateKey})
+        // Pipe the read stream to the response stream
+        donwloadStream.pipe(res)
 
     } catch (error) {
         return next(error)
     }
 })
 
-/**
- * Delete all files and folder associated with this private key
- */
+// Delete all files and folder associated with this private key
 router.delete('/:privateKey', async (req, res, next) => {
     try {
         if (req.params.privateKey) {
@@ -185,7 +145,6 @@ router.delete('/:privateKey', async (req, res, next) => {
         return next(error)
     }
 })
-
 
 // Render the form for UI based uploads. 
 router.get('/', (req, res, next) => {

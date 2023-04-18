@@ -4,4 +4,6 @@ files-uploaded/
 uploads/
 node_modules/
 
+gcp-service-account.json
+
 config/secret.js
