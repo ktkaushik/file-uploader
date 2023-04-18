@@ -5,38 +5,30 @@ const fs      = require('fs')
 const path    = require('path')
 const config  = require('../config')()
 const Limiter = require('../lib/limiter')
-
-router.get('/', (req, res, next) => {
-    res.format({
-        html: () => {
-            return res.render('uploads/new', {});
-        },
-
-        json: () => {
-            res.json({
-                hello: true
-            });
-        }
-    });
-});
+const {
+    getPrivateKey, 
+    base64Encode, 
+    getEncodedFolderNameForIP
+}  = require('../lib/utilities')
 
 // Set up storage configuration for multer
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        console.log(`the IP address is ${req.ip}`)
-        // const ip = req.ip
-        const ip = '10.10.10.10'
-        const uploadDir = path.join(__dirname, '..', 'temp');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
+
+        // we will store files in a 'temp' director
+        const tempDirPath = path.join(__dirname, '..', 'temp')
+
+        // make the temp directory if it doesn't exist
+        if (!fs.existsSync(tempDirPath)) {
+            fs.mkdirSync(tempDirPath, { recursive: true })
         }
-        cb(null, uploadDir);
+        cb(null, tempDirPath)
     },
     originalName: (req, file, cb) => {
-        const timestamp = Date.now();
-        cb(null, `${timestamp}-${file.originalname}`);
+        // const timestamp = Date.now()
+        cb(null, file.originalname)
     }
-});
+})
 
 // Configure multer to upload
 const upload = multer({
@@ -44,7 +36,7 @@ const upload = multer({
     limits: {
         fileSize: 1024 * 1024 * 1024, // 1 GB
     }
-});
+})
 
 /**
  * 1. Get IP of the user
@@ -56,31 +48,51 @@ const upload = multer({
  * 7. 
  */
 router.post('/upload', upload.array('files'), async (req, res, next) => {
-    const uploadedFiles = [];
-    // const ip = req.ip;
-    const ip = '10.10.10.10';
+    const uploadedFiles = []
     const files = req.files
 
-    const {allow, message} = await new Limiter(ip, files).allowUploadsForThisIP()
+    // const ip = req.ip
+    const ip = '10.10.10.10'
+
+    // get publicKey and privateKey
+    const publicKey  = base64Encode(ip)
+    const privateKey = getPrivateKey(ip)
+
+    // Call the Limiter module and check if uploads are allowed
+    const {allow, errorMessage} = await new Limiter(ip, files, publicKey, privateKey).allowUploadsForThisIP()
+
     console.log(`Allowed? ${allow}`)
-    console.log(`Message? ${message}`)
+    console.log(`errorMessage? ${errorMessage}`)
+
     if (allow) {
 
-        const tempDir   = path.join(__dirname, '..', 'temp');
-        const uploadDir = path.join(__dirname, '..', config.constants.uploadsDirectoryName, ip);
+        // get path for temp upload of files
+        const tempDir = path.join(__dirname, '..', 'temp')
+
+        // get path to upload files for this IP
+        const uploadDir = path.join(__dirname, '..', config.constants.uploadsDirectoryName, getEncodedFolderNameForIP(publicKey, privateKey))
+
+        // create a folder for this IP if it doesn't exist
         if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
+            fs.mkdirSync(uploadDir, { recursive: true })
         }
 
-        const fileStreams = req.files.map((file) => {
+        // begin uploading
+        files.forEach((file) => {
+
+            // read file from temp path
             const readFilePath = path.join(tempDir, file.filename)
             const readStream   = fs.createReadStream(readFilePath)
-            const filePath     = path.join(uploadDir, file.originalname);
-            const writeStream  = fs.createWriteStream(filePath, 'utf8');
+
+            // set write file path
+            const writeFilePath = path.join(uploadDir, file.originalname)
+            const writeStream   = fs.createWriteStream(writeFilePath, 'utf8')
 
             // init read stream so we can write a new file
             readStream.pipe(writeStream)
-            uploadedFiles.push(file.originalname);
+
+            // send response of each file uploaded. TBD
+            uploadedFiles.push(file.originalname)
 
             // error handling
             writeStream.on('error', (error) => {
@@ -88,21 +100,45 @@ router.post('/upload', upload.array('files'), async (req, res, next) => {
                 writeStream.end()
                 throw error
             })
-    
+
+            // Uploads finish
             writeStream.on('finish', () => {
+                console.log(`File uploaded ${file.originalname}`)
                 writeStream.end()
-                fs.unlinkSync(readFilePath);
+                fs.unlinkSync(readFilePath)
             })
-        });
+        })
+
+        // send response with publicKey and privateKey
+        return res.json({uploads: true, publicKey, privateKey})
     } else {
+
+        // delete temp files
         files.forEach((file) => {
             const readFilePath = path.join(__dirname, '..', 'temp', file.filename)
-            fs.unlinkSync(readFilePath);
+            fs.unlinkSync(readFilePath)
         })
-        return next(new Error(message))
+
+        // throw error using next so it can be handled centrally
+        return next(new Error(errorMessage))
     }
 
-    return res.json({done: true})
-});
+})
 
-module.exports = router;
+
+// Render the form for UI based uploads. 
+router.get('/', (req, res, next) => {
+    return res.format({
+        html: () => {
+            return res.render('uploads/new', {})
+        },
+
+        json: () => {
+            res.json({
+                hello: true
+            })
+        }
+    })
+})
+
+module.exports = router

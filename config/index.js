@@ -1,8 +1,6 @@
-
 /**
- * Load the right ENV config
+ * Load the right ENV config file
  */
-
 
 module.exports = function () {
     let config, defaultsEnv

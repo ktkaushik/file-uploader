@@ -27,12 +27,12 @@ module.exports = {
     },
 
     app: {
-        api: 'localhost:3000',
-        url: 'http://localhost:3000',
+        api: 'localhost:2222',
+        url: 'http://localhost:2222',
         protocol: 'http'
     },
 
     server: {
-        port: 3000 // port to run your express server
+        port: 2222 // port to run your express server
     }
 };
