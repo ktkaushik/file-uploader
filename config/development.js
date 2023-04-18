@@ -23,6 +23,7 @@ module.exports = {
         messages: {
             dailySizeLimitsReached: 'Sorry, daily limit reached in terms of size. Try again tomorrow.',
             dailyTotalLimitReached: 'Sorry, daily limit reached for total files uploaded. Try again later.',
+            missingPrivateKey: 'Private key is missing'
         }
     },
 

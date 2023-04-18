@@ -8,7 +8,8 @@ const Limiter = require('../lib/limiter')
 const {
     getPrivateKey, 
     base64Encode, 
-    getEncodedFolderNameForIP
+    getEncodedFolderNameForIP,
+    getFolderNameFromPrivateKey
 }  = require('../lib/utilities')
 
 // Set up storage configuration for multer
@@ -204,39 +205,39 @@ router.get('/:publicKey', async (req, res, next) => {
  */
 router.delete('/:privateKey', async (req, res, next) => {
     try {
-        // const ip = req.ip
-        const ip = '10.10.10.10'
+        if (req.params.privateKey) {
 
-        // get publicKey and privateKey
-        const publicKey  = base64Encode(ip)
-        const privateKey = getPrivateKey(ip)
+            // get folderName for this private key
+            const folderName = getFolderNameFromPrivateKey(req.params.privateKey)
 
-        // get path to upload files for this IP
-        const uploadDirPath = path.join(__dirname, '..', config.constants.uploadsDirectoryName, getEncodedFolderNameForIP(publicKey, privateKey))
+            // get path to upload files for this IP
+            const folderPath = path.join(__dirname, '..', config.constants.uploadsDirectoryName, folderName)
 
-        // create a folder for this IP if it doesn't exist
-        if (!fs.existsSync(uploadDirPath)) {
-            // res.status(304)
-            return res.status(304).send({
-                message: "No files found for this private key"
+            // create a folder for this IP if it doesn't exist
+            if (!fs.existsSync(folderPath)) {
+                return res.status(304).send({
+                    message: "No files found for this private key"
+                })
+            }
+
+            // delete each file and empty the folder. 
+            // caveat: we can't delete a folder if it's not empty.
+            const uploadedFiles = fs.readdirSync(folderPath)
+            uploadedFiles.forEach((file) => {
+                fs.rmSync(path.join(folderPath, file))
             })
+
+            // delete the folder
+            fs.rmdirSync(path.join(folderPath))
+
+            return res.json({
+                success: true,
+                action: 'delete',
+                totalFilesDeleted: uploadedFiles.length
+            })
+        } else {
+            return next(new Error(config.constants.missingPrivateKey))
         }
-
-        // delete each file and empty the folder. 
-        // caveat: we can't delete a folder if it's not empty.
-        const uploadedFiles = fs.readdirSync(uploadDirPath)
-        uploadedFiles.forEach((file) => {
-            fs.rmSync(path.join(uploadDirPath, file))
-        })
-
-        // delete the folder
-        fs.rmdirSync(path.join(uploadDirPath))
-
-        return res.json({
-            success: true,
-            action: 'delete',
-            totalFilesDeleted: uploadedFiles.length
-        })
     } catch (error) {
         return next(error)
     }
