@@ -3,7 +3,7 @@ const cron = require('node-cron')
 const FilesManager = require('../lib/files_manager')
 
 cron.schedule("* */15 * * * *", async () => {
-    console.log("--------- Clean up begin ------------");
+    console.log("--------- Cron clean up begun ------------");
     await FilesManager.deleteExpiredFiles()
-    console.log("--------- Clean up done ------------");
+    console.log("--------- end ------------");
 })
