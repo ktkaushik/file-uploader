@@ -5,6 +5,7 @@ const fs      = require('fs')
 const path    = require('path')
 const config  = require('../config')()
 const Limiter = require('../lib/limiter')
+const FilesManager = require('../lib/files_manager')
 const {
     getPrivateKey, 
     base64Encode, 
@@ -50,66 +51,22 @@ const upload = multer({
  */
 router.post('/', upload.array('files'), async (req, res, next) => {
     try {
-        const uploadedFiles = []
-        const files = req.files
 
+        const files = req.files
+        const uploadedFiles = []
         // const ip = req.ip
         const ip = '10.10.10.10'
 
-        // get publicKey and privateKey
-        const publicKey  = base64Encode(ip)
-        const privateKey = getPrivateKey(ip)
+        const filesManager = new FilesManager(ip, files)
+        const {uploadDirPath, publicKey, privateKey} = filesManager.getFolderInfo()
 
+        console.log({uploadDirPath, publicKey, privateKey})
         // Call the Limiter module and check if uploads are allowed
-        const {allow, errorMessage} = await new Limiter(ip, files, publicKey, privateKey).allowUploadsForThisIP()
-
-        console.log(`Allowed? ${allow}`)
-        console.log(`errorMessage? ${errorMessage}`)
+        const {allow, errorMessage} = await new Limiter(ip, files, uploadDirPath).allowUploadsForThisIP()
 
         if (allow) {
 
-            // get path for temp upload of files
-            const tempDir = path.join(__dirname, '..', 'temp')
-
-            // get path to upload files for this IP
-            const uploadDir = path.join(__dirname, '..', config.constants.uploadsDirectoryName, getEncodedFolderNameForIP(publicKey, privateKey))
-
-            // create a folder for this IP if it doesn't exist
-            if (!fs.existsSync(uploadDir)) {
-                fs.mkdirSync(uploadDir, { recursive: true })
-            }
-
-            // begin uploading
-            files.forEach((file) => {
-
-                // read file from temp path
-                const readFilePath = path.join(tempDir, file.filename)
-                const readStream   = fs.createReadStream(readFilePath)
-
-                // set write file path
-                const writeFilePath = path.join(uploadDir, file.originalname)
-                const writeStream   = fs.createWriteStream(writeFilePath, 'utf8')
-
-                // init read stream so we can write a new file
-                readStream.pipe(writeStream)
-
-                // send response of each file uploaded. TBD
-                uploadedFiles.push(file.originalname)
-
-                // error handling
-                writeStream.on('error', (error) => {
-                    console.error('Error while uploading file')
-                    writeStream.end()
-                    throw error
-                })
-
-                // Uploads finish
-                writeStream.on('finish', () => {
-                    console.log(`File uploaded ${file.originalname}`)
-                    writeStream.end()
-                    fs.unlinkSync(readFilePath)
-                })
-            })
+            await filesManager.upload()
 
             // send response with publicKey and privateKey
             return res.json({success: true, publicKey, privateKey})
@@ -118,7 +75,7 @@ router.post('/', upload.array('files'), async (req, res, next) => {
             // delete temp files
             files.forEach((file) => {
                 const readFilePath = path.join(__dirname, '..', 'temp', file.filename)
-                fs.unlinkSync(readFilePath)
+                fs.rmSync(readFilePath)
             })
 
             // throw error using next so it can be handled centrally
@@ -207,34 +164,20 @@ router.delete('/:privateKey', async (req, res, next) => {
     try {
         if (req.params.privateKey) {
 
-            // get folderName for this private key
-            const folderName = getFolderNameFromPrivateKey(req.params.privateKey)
+            const filesManager = new FilesManager(false, false, req.params.privateKey)
 
-            // get path to upload files for this IP
-            const folderPath = path.join(__dirname, '..', config.constants.uploadsDirectoryName, folderName)
+            const {folderFound, totalFilesDeleted} = await filesManager.deleteAllFiles()
 
-            // create a folder for this IP if it doesn't exist
-            if (!fs.existsSync(folderPath)) {
-                return res.status(304).send({
-                    message: "No files found for this private key"
+            if (folderFound) {
+                return res.json({
+                    success: true,
+                    action: 'delete',
+                    totalFilesDeleted: totalFilesDeleted
                 })
+            } else {
+                return res.status(304).json({message: 'No files found to delete'})
             }
 
-            // delete each file and empty the folder. 
-            // caveat: we can't delete a folder if it's not empty.
-            const uploadedFiles = fs.readdirSync(folderPath)
-            uploadedFiles.forEach((file) => {
-                fs.rmSync(path.join(folderPath, file))
-            })
-
-            // delete the folder
-            fs.rmdirSync(path.join(folderPath))
-
-            return res.json({
-                success: true,
-                action: 'delete',
-                totalFilesDeleted: uploadedFiles.length
-            })
         } else {
             return next(new Error(config.constants.missingPrivateKey))
         }
