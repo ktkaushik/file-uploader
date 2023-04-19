@@ -1,11 +1,11 @@
 const request = require('supertest');
-const app = require('../../app');
+const app = require('../app');
 const fs      = require('fs')
 const path    = require('path')
 const expect  = require('chai').expect
 
-const sampleDirPath = path.join(__dirname, '../sample')
-const tempDirPath   = path.join(__dirname, '../../', 'temp') 
+const sampleDirPath = path.join(__dirname, 'sample')
+const tempDirPath   = path.join(__dirname, '../', 'temp') 
 
 let publicKey, privateKey
 
