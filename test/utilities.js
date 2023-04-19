@@ -36,7 +36,6 @@ describe('Test utilities', function () {
         it('should generate an encoded folder name from a public and private key', function () {
             const publicKey = base64Encode(ip)
             const privateKey = getPrivateKey(ip)
-            console.log(publicKey, privateKey)
             const folderName = getEncodedFolderNameForIP(publicKey, privateKey)
             assert.equal(folderName, '127.0.0.1--MTI3LjAuMC4x--TVRJM0xqQXVNQzR4')
         })

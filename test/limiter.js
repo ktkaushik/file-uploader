@@ -1,39 +1,85 @@
-const assert = require('assert');
-const Limiter = require('../lib/limiter');
+const fs      = require('fs')
+const path    = require('path')
+const moment  = require('moment')
+const assert  = require('assert')
+const Limiter = require('../lib/limiter')
+const config  = require('../config')()
 
-describe('Limiter', function() {
-    describe('allowUploadsForThisIP', function() {
-        it('should allow upload when no previous uploads for this IP', async function() {
-            const limiter = new Limiter('127.0.0.1', [], './test/uploads');
-            const result = await limiter.allowUploadsForThisIP();
-            assert.strictEqual(result.allow, true);
-        });
+const sampleDirPath = path.join(__dirname, './sample')
+const uploadDirPath = path.join(__dirname, '../', config.constants.uploadsDirectoryName) 
+
+describe('Limiter integration tests', () => {
+    let files;
+    let ip;
+    let limiter;
+
+    beforeEach(() => {
         
-        it('should not allow upload when total files limit is breached', async function() {
-            const limiter = new Limiter('127.0.0.1', ['file1.txt', 'file2.txt'], './test/uploads');
-            const result = await limiter.allowUploadsForThisIP();
-            assert.strictEqual(result.allow, false);
-            assert.strictEqual(result.errorMessage, 'Daily limit of total files reached');
-        });
+        // Generate some sample files for testing
+        // files = ['file1.txt', 'file2.txt', 'file3.txt'];
+        const files = fs.readdirSync(sampleDirPath)
+        // console.log(path.join(uploadDirPath, files[0]))
+        files.forEach((file) => {
+            // fs.createReadStream(path.join(sampleDirPath, file)).pipe(fs.createWriteStream(path.join(uploadDirPath, file)));
+            fs.copyFileSync(path.join(sampleDirPath, file), path.join(uploadDirPath, file))
+        })
 
-        it('should not allow upload when size limit is breached', async function() {
-            const limiter = new Limiter('127.0.0.1', ['file1.txt'], './test/uploads');
-            limiter.totalSizeOfFilesUploaded = 100000000; // set total size to 100 MB
-            const result = await limiter.allowUploadsForThisIP();
-            assert.strictEqual(result.allow, false);
-            assert.strictEqual(result.errorMessage, 'Daily size limit reached');
-        });
+        // Set the IP address of the uploader
+        ip = '192.168.0.1';
 
-        it('should allow upload when limit is not breached', async function() {
-            const limiter = new Limiter('127.0.0.1', ['file1.txt'], './test/uploads');
-            const result = await limiter.allowUploadsForThisIP();
-            assert.strictEqual(result.allow, true);
-        });
+        // Initialize the Limiter instance
+        limiter = new Limiter(ip, files, uploadDirPath);
+    })
 
-        it('should return false when upload directory does not exist', async function() {
-            const limiter = new Limiter('127.0.0.1', ['file1.txt'], './test/non-existent-directory');
-            const result = await limiter.allowUploadsForThisIP();
-            assert.strictEqual(result, false);
-        });
-    });
-});
+    // afterEach(() => {
+    //     // const files = fs.readdirSync(sampleDirPath)
+    //     // Remove all the uploaded files
+    //     files.forEach((file) => {
+    //         fs.unlinkSync(path.join(uploadDirPath, file));
+    //     })
+    // })
+
+    it('should allow upload when no limits are breached', async () => {
+        // remove all files uploaded so no limits are breached
+        const files = fs.readdirSync(uploadDirPath)
+        files.forEach((file) => {
+            fs.rmSync(path.join(uploadDirPath, file))
+        })
+
+        const result = await limiter.allowUploadsForThisIP();
+        assert.strictEqual(result.allow, true);
+    })
+
+    it('should not allow upload when size limit is breached', async () => {
+        // Set the size limit to 1 byte so that it is breached. We uploaded 100MB file which is the limit
+        // but we will upload another file to breach
+
+        const file = 'file1.txt'
+        if (fs.existsSync(path.join(uploadDirPath, file))) {
+            fs.rmSync(path.join(uploadDirPath, file))
+        }
+
+        const result = await limiter.allowUploadsForThisIP();
+
+        assert.strictEqual(result.allow, false);
+        assert.strictEqual(result.errorMessage, config.constants.messages.dailySizeLimitsReached);
+    })
+
+    it('should not allow upload when daily total limit is breached', async () => {
+        // uploading 2 files will breach total limit
+
+        const files = ['file2.txt', 'file3.txt']
+        files.forEach((file) => {
+            fs.writeFileSync(path.join(uploadDirPath, file), 'Sample content')
+        })
+
+        const result = await limiter.allowUploadsForThisIP();
+
+        assert.strictEqual(result.allow, false);
+        assert.strictEqual(result.errorMessage, config.constants.messages.dailyTotalLimitReached);
+
+        files.forEach((file) => {
+            fs.rmSync(path.join(uploadDirPath, file))
+        })
+    })
+})
