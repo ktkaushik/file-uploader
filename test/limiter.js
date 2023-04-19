@@ -9,7 +9,6 @@ const sampleDirPath = path.join(__dirname, './sample')
 const uploadDirPath = path.join(__dirname, '../', config.constants.uploadsDirectoryName) 
 
 describe('Limiter module testing scenarios *********', () => {
-    let files;
     let ip;
     let limiter;
 
@@ -30,6 +29,7 @@ describe('Limiter module testing scenarios *********', () => {
     })
 
     it('should allow upload when no limits are breached', async () => {
+
         // remove all files uploaded so no limits are breached
         const files = fs.readdirSync(uploadDirPath)
         files.forEach((file) => {
@@ -41,9 +41,9 @@ describe('Limiter module testing scenarios *********', () => {
     })
 
     it('should not allow upload when size limit is breached', async () => {
-        // Set the size limit to 1 byte so that it is breached. We uploaded 100MB file which is the limit
-        // but we will upload another file to breach
 
+        // Set the size limit to 1 byte so that it is breached. We uploaded 10mb file which is the limit
+        // but we will upload another file to breach
         const file = 'file1.txt'
         if (fs.existsSync(path.join(uploadDirPath, file))) {
             fs.rmSync(path.join(uploadDirPath, file))
@@ -56,8 +56,8 @@ describe('Limiter module testing scenarios *********', () => {
     })
 
     it('should not allow upload when daily total limit is breached', async () => {
-        // uploading 2 files will breach total limit
 
+        // uploading 2 files will breach total limit
         const files = ['file2.txt', 'file3.txt']
         files.forEach((file) => {
             fs.writeFileSync(path.join(uploadDirPath, file), 'Sample content')

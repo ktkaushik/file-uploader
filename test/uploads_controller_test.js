@@ -1,5 +1,6 @@
-const request = require('supertest');
-const app = require('../app');
+
+const request = require('supertest')
+const app     = require('../app')
 const fs      = require('fs')
 const path    = require('path')
 const expect  = require('chai').expect
@@ -8,7 +9,6 @@ const sampleDirPath = path.join(__dirname, 'sample')
 const tempDirPath   = path.join(__dirname, '../', 'temp') 
 
 let publicKey, privateKey
-
 
 describe('File Upload API', () => {
     describe('POST /files', () => {
@@ -36,7 +36,6 @@ describe('File Upload API', () => {
                 .post(`/files`)
                 .attach('files', path.join(sampleDirPath, '10mb.pdf'))
                 .set('Content-Type', 'multipart/form-data')
-                // .expect(200)
                 .end((err, res) => {
                     if (err) return done(err)
                     expect(res.status).to.equal(500)

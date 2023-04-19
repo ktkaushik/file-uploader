@@ -5,7 +5,7 @@
     "scripts": {
         "start": "node ./bin/www",
         "test": "NODE_ENV=testing mocha test",
-        "dev": "nodemon ./bin/www --ignore uploads/ --ignore files-uploaded/",
+        "dev": "nodemon ./bin/www --ignore uploads/ --ignore files-uploaded/ --ignore temp/",
         "inspect": "nodemon --inspect ./bin/www"
     },
     "dependencies": {
