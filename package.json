@@ -12,6 +12,7 @@
         "@handlebars/allow-prototype-access": "^1.0.5",
         "axios": "^0.21.4",
         "browser-sync": "^2.26.13",
+        "chai": "^4.3.7",
         "chalk": "^4.1.0",
         "cls-hooked": "^4.2.2",
         "connect-flash": "^0.1.1",
@@ -40,6 +41,7 @@
         "node-cron": "^3.0.2",
         "node-sass": "^8.0.0",
         "slug": "^4.0.2",
+        "supertest": "^6.3.3",
         "utf8": "^3.0.0",
         "zip-a-folder": "^1.1.5"
     },
@@ -50,6 +52,7 @@
         "grunt-contrib-uglify": "^4.0.1",
         "grunt-contrib-watch": "^1.1.0",
         "grunt-terser": "^2.0.0",
-        "nodemon": "^2.0.22"
+        "nodemon": "^2.0.22",
+        "should": "^13.2.3"
     }
 }

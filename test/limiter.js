@@ -8,36 +8,26 @@ const config  = require('../config')()
 const sampleDirPath = path.join(__dirname, './sample')
 const uploadDirPath = path.join(__dirname, '../', config.constants.uploadsDirectoryName) 
 
-describe('Limiter integration tests', () => {
+describe('Limiter module testing scenarios *********', () => {
     let files;
     let ip;
     let limiter;
 
+    // Upload files before each test case
     beforeEach(() => {
         
         // Generate some sample files for testing
-        // files = ['file1.txt', 'file2.txt', 'file3.txt'];
         const files = fs.readdirSync(sampleDirPath)
-        // console.log(path.join(uploadDirPath, files[0]))
         files.forEach((file) => {
-            // fs.createReadStream(path.join(sampleDirPath, file)).pipe(fs.createWriteStream(path.join(uploadDirPath, file)));
             fs.copyFileSync(path.join(sampleDirPath, file), path.join(uploadDirPath, file))
         })
 
         // Set the IP address of the uploader
-        ip = '192.168.0.1';
+        ip = '10.10.10.10';
 
         // Initialize the Limiter instance
         limiter = new Limiter(ip, files, uploadDirPath);
     })
-
-    // afterEach(() => {
-    //     // const files = fs.readdirSync(sampleDirPath)
-    //     // Remove all the uploaded files
-    //     files.forEach((file) => {
-    //         fs.unlinkSync(path.join(uploadDirPath, file));
-    //     })
-    // })
 
     it('should allow upload when no limits are breached', async () => {
         // remove all files uploaded so no limits are breached
@@ -82,4 +72,5 @@ describe('Limiter integration tests', () => {
             fs.rmSync(path.join(uploadDirPath, file))
         })
     })
+
 })

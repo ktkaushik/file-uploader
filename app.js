@@ -1,19 +1,11 @@
-const isProduction = (process.env.NODE_ENV === 'production')
-// const isProduction = true
-const isStaging    = (process.env.NODE_ENV === 'staging')
 
 const express      = require('express')
 const path         = require('path')
 const cookieParser = require('cookie-parser')
 const logger       = require('morgan')
-const mongoose     = require('mongoose')
 const hbs          = require('express-hbs')
 const handlebars   = require('handlebars')
-const config       = require('./config')()
 const secret       = require('./config/secret')
-const flash        = require('connect-flash')
-const session      = require('express-session')
-const MongoStore   = require('connect-mongo')(session)
 const app          = express()
 const cors         = require("cors")
 const {allowInsecurePrototypeAccess} = require('@handlebars/allow-prototype-access')
@@ -44,25 +36,7 @@ app.use(express.json());
 app.use(express.urlencoded({limit: '20mb', extended: true }));
 app.use(cookieParser());
 
-mongoose.connect(config.mongodb.uri, config.mongodb.options);
-
-app.use(session({
-        secret: '1236876781346812736jkodghfjklahsdf',
-        name: 'orangatun-and-a-chimpanzee',
-        maxAge: new Date(Date.now() + (3600000 * 24 * 30 * 12)), // one year
-        proxy: true,
-        resave: true,
-        saveUninitialized: true,
-        store: new MongoStore({
-            mongooseConnection: mongoose.connection
-        }, function(err) {
-            console.log(err || 'connect-mongodb setup ok');
-        })
-    })
-);
 app.use(express.static(path.join(__dirname, 'public')));
-
-app.use(flash())
 
 app.use(Honeybadger.errorHandler);  // Use *after* all other app middleware.
 

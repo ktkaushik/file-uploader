@@ -123,8 +123,7 @@ router.get('/:publicKey', async (req, res, next) => {
 router.delete('/:privateKey', async (req, res, next) => {
     try {
         if (req.params.privateKey) {
-
-            const filesManager = new FilesManager(false, false, req.params.privateKey)
+            const filesManager = new FilesManager(false, false, false, req.params.privateKey)
 
             const {folderFound, totalFilesDeleted} = await filesManager.deleteAllFiles()
 
@@ -147,7 +146,7 @@ router.delete('/:privateKey', async (req, res, next) => {
 })
 
 // Render the form for UI based uploads. 
-router.get('/', (req, res, next) => {
+router.get('/new', (req, res, next) => {
     return res.format({
         html: () => {
             return res.render('uploads/new', {})
