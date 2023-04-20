@@ -1,34 +1,24 @@
 
 /**
- * production config
+ * development config
  */
 
 const secret = require('./secret')
 
 module.exports = {
 
-    // db uri to connect. Name of the database is notifications, please change it to your liking
-    mongodb: {
-        uri: 'mongodb://localhost/meld-file-uploader',
-        options : {
-            useNewUrlParser   : true,
-            useFindAndModify  : false,
-            useCreateIndex    : true,
-            useUnifiedTopology: false
-        }
-    },
-
     constants: {
-        'apiKeyHeader': 'x-api-key'
-    },
-
-    app: {
-        api: 'localhost:3000',
-        url: 'http://localhost:3000',
-        protocol: 'http'
-    },
-
-    server: {
-        port: 3000 // port to run your express server
+        cronExpression         : '0 * * * * *',      // every hour at minute 00
+        uploadsDirectoryName   : 'files-uploaded',   // directory name to upload
+        purgeUploadsTimeMeasure: 4,                  // in minutes
+        totalUploadsLimit      : 5,                  // 5 files allowed every 4 hours
+        sizeLimit              : 1024 * 1024 * 1024, // 1 GB upload limit
+        messages: {
+            dailySizeLimitsReached: 'Sorry, daily limit reached in terms of size. Try again tomorrow.',
+            dailyTotalLimitReached: 'Sorry, daily limit reached for total files uploaded. Try again later.',
+            noFilesFound: 'Sorry, we could not find any data',
+            missingPrivateKey: 'Private key is missing'
+        }
     }
-};
+
+}

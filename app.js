@@ -42,7 +42,7 @@ app.use(Honeybadger.errorHandler);  // Use *after* all other app middleware.
 
 require('./middlewares/models')()
 require('./middlewares/routes')(app)
-require('./middlewares/jobs')
+require('./middlewares/cron_jobs')
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

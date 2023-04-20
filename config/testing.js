@@ -7,13 +7,8 @@ const secret = require('./secret')
 
 module.exports = {
 
-    // db uri to connect. Name of the database is notifications, please change it to your liking
-    mongodb: {
-        uri: 'mongodb://localhost/meld-file-uploader',
-        options : {}
-    },
-
     constants: {
+        cronExpression         : '0 * * * * *',      // every hour at minute 00
         uploadsDirectoryName   : 'test-files-uploaded',   // directory name to upload
         purgeUploadsTimeMeasure: 60,                 // in minutes
         totalUploadsLimit      : 3,                  // 5 files allowed every 4 hours
@@ -24,15 +19,6 @@ module.exports = {
             noFilesFound: 'Sorry, we could not find any data',
             missingPrivateKey: 'Private key is missing'
         }
-    },
-
-    app: {
-        api: 'localhost:2222',
-        url: 'http://localhost:2222',
-        protocol: 'http'
-    },
-
-    server: {
-        port: 2222 // port to run your express server
     }
-};
+
+}

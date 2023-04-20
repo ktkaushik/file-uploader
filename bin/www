@@ -106,12 +106,23 @@ function onListening() {
       Phone  👉 0413962720
       ______________________________________________________
 
-      This is a Node.js assignment made for meldCX
+      This is a Node.js (v18.16.0) assignment made for meldCX
       
-      Stack used:
-      1. Node.JS v18.16.0 (latest)
-      2. Redis
-      3. Cron jobs (native)
+      Packages used:
+      1. Cron jobs using node-cron (middlewares/jobs)
+      2. zip-a-folder used to zip files uploaded by user to download
+
+      Configuration:
+      Refer to config/<env>.js and you will find all the configuration options. 
+
+      Options available to configure based on environment:
+      1. FOLDER to upload files to
+      2. Cron job expressions
+      3. When to purge uploaded files?
+      4. Total number of files users can upload within time range
+      5. Total size limitations on upload
+      6. Error messages
+      
 
   `)
 }
