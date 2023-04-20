@@ -42,13 +42,16 @@ const upload = multer({
     }
 })
 
-// Upload files route
+/**
+ * Upload files on this endpoint
+ * @param {files} req.body.files all files attached in a multipart/form-data
+ */
 router.post('/', upload.array('files'), async (req, res, next) => {
     try {
 
         const files = req.files
 
-        // const ip = req.ip
+        // const ip = req.ip // req.ip works but we will overwrite to try diff. examples
         const ip = '10.10.10.10'
 
         // Initialise FilesManager and get folder info for this up
@@ -83,7 +86,11 @@ router.post('/', upload.array('files'), async (req, res, next) => {
 
 })
 
-// Download all the files uploaded by zipping it. Most browsers won't support downloading multiple files simultaneously
+/**
+ * Download all the files uploaded by zipping it. 
+ * Most browsers won't support downloading multiple files simultaneously
+ * @param {publicKey} string 
+ */
 router.get('/:publicKey', async (req, res, next) => {
     try {
         // const ip = req.ip
@@ -119,12 +126,18 @@ router.get('/:publicKey', async (req, res, next) => {
     }
 })
 
-// Delete all files and folder associated with this private key
+/**
+ * Delete all files and folder associated with this private key
+ * @param {privateKey} string
+ */
 router.delete('/:privateKey', async (req, res, next) => {
     try {
         if (req.params.privateKey) {
-            const filesManager = new FilesManager(false, false, false, req.params.privateKey)
 
+            // initialise files manager
+            const filesManager = new FilesManager(false, false, false, req.params.privateKey)
+            
+            // ask files manager to delete all files assciated to this privatekey
             const {folderFound, totalFilesDeleted} = await filesManager.deleteAllFiles()
 
             if (folderFound) {

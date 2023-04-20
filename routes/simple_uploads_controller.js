@@ -14,12 +14,10 @@ router.get('/', (req, res, next) => {
         json: () => {
             res.json({
                 hello: true
-            });
+            })
         }
     });
 });
-// console.log(`${config.constants.uploadsDirectoryName}/`)
-
 
 // Set storage engine for multer
 const storage = multer.diskStorage({
@@ -36,6 +34,7 @@ const upload = multer({
     limit: config.constants.sizeLimits // 1 GB
 });
 
+// 1st iteration - does not use Streams to upload files
 router.post('/upload', (req, res) => {
     upload(req, res, (err) => {
         if (err) {
@@ -48,27 +47,5 @@ router.post('/upload', (req, res) => {
         res.send('Files uploaded successfully');
     });
 });
-
-router.post('/multi-upload', upload.array('files'), (req, res, next) => {
-    const file = req.files[0]
-    console.log(file)
-    const filePath = path.join(__dirname, '..', `${config.constants.uploadsDirectoryName}`, file.filename)
-    const writeStream = fs.createWriteStream(filePath)
-    // With the open - event, data will start being written
-    // from the request to the stream's destination path
-    writeStream.on('open', () => {
-        console.log('Stream open ...  0.00%');
-        req.pipe(writeStream);
-    });
-
-    // When the stream is finished, print a final message
-    // Also, resolve the location of the file to calling function
-    writeStream.on('close', () => {
-        console.log('Processing  ...  100%');
-        // resolve(filePath);
-    });
-
-    return res.json({done: true})
-})
 
 module.exports = router;
