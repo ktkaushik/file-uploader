@@ -11,7 +11,8 @@ nvm install v18.16.0
 npm install
 ```
 
-3. Start the server
+## How to run?
+**Start the server**
 ```
 npm start
 ```
@@ -21,7 +22,7 @@ You can choose to enter your own PORT
 PORT=4000 npm start
 ```
 
-4. Run test cases
+**Run test cases**
 ```
 npm test
 ```
@@ -35,7 +36,14 @@ npm test
 - API end points sit inside `routes/` folder which are loaded in the `middlewares/routes.js` file
 - All logic can be found in `lib/` folder
 - Background cron is set in `middlewares/cron_job.js` file
+- Find all tests in `test/` folder
 
+## API endpoints
+1. **POST** `/files` - upload files with **files** parameter. Returns `publicKey` and `privateKey`
+2. **GET** `/files/:publicKey` - use this to download all uploaded files in zip format
+3. **DELETE** `/files/:privateKey` - to delete all the files uploaded
 
-Refer to `routes/uploads_controller` to find the API used to upload files. 
-
+## Some info
+- Uploads are done with limitations in mind thanks to the **Limiter** (`lib/limiter`) module
+- `publicKey` is generated using base64 encode. We encode the IP address of the request.
+- `privateKey` is also generated using base64 encode. We encode the `publicKey`.
