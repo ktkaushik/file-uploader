@@ -1,4 +1,12 @@
-# File uploader assignment for meld CX
+# File uploader
+
+## Table of Contents
+1. [How to setup?](#how-to-setup)
+2. [How to run?](#how-to-run)
+3. [Dependencies](#dependencies)
+4. [Code structure](#code-structure)
+5. [API Endpoints](#api-endpoints)
+6. [Quick info](#quick-info)
 
 ## How to setup?
 1. Install latest nodejs i.e. `v18.16.0`
@@ -32,7 +40,7 @@ npm test
 2. Cron jobs using [node-cron](https://www.npmjs.com/package/node-cron) (middlewares/jobs)
 3. [zip-a-folder](https://www.npmjs.com/package/zip-a-folder) used to zip files uploaded by user to download
 
-## About the code
+## Code structure
 - API end points sit inside `routes/` folder which are loaded in the `middlewares/routes.js` file
 - All logic can be found in `lib/` folder
 - Background cron is set in `middlewares/cron_job.js` file
@@ -43,7 +51,7 @@ npm test
 2. **GET** `/files/:publicKey` - use this to download all uploaded files in zip format
 3. **DELETE** `/files/:privateKey` - to delete all the files uploaded
 
-## Some info
+## Quick info
 - Uploads are done with limitations in mind thanks to the **Limiter** (`lib/limiter`) module
 - `publicKey` is generated using base64 encode. We encode the IP address of the request.
 - `privateKey` is also generated using base64 encode. We encode the `publicKey`.
