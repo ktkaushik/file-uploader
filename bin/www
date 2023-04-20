@@ -109,8 +109,9 @@ function onListening() {
       This is a Node.js (v18.16.0) assignment made for meldCX
       
       Packages used:
-      1. Cron jobs using node-cron (middlewares/jobs)
-      2. zip-a-folder used to zip files uploaded by user to download
+      1. ExpressJS
+      2. Cron jobs using node-cron (middlewares/jobs)
+      3. zip-a-folder used to zip files uploaded by user to download
 
       Configuration:
       Refer to config/<env>.js and you will find all the configuration options. 
