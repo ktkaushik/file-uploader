@@ -40,7 +40,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(Honeybadger.errorHandler);  // Use *after* all other app middleware.
 
-require('./middlewares/models')()
 require('./middlewares/routes')(app)
 require('./middlewares/cron_jobs')
 
